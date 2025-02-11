@@ -102,7 +102,7 @@ def sample_pagerank(corpus, damping_factor, n):
 
     variable = df[0].value_counts()
 
-    page_ranks = {uniques[i] : int(variable[i]) for i in range(len(df[0].unique()))}
+    page_ranks = {uniques[i] : int(variable[i]) for i in range(df[0].nunique())}
 
     for page in page_ranks:
         page_ranks[page] = page_ranks[page] / n
