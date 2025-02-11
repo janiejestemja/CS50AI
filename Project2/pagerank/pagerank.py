@@ -2,6 +2,9 @@ import os
 import random
 import re
 import sys
+from random import choice, choices
+import numpy as np
+import pandas as pd
 
 DAMPING = 0.85
 SAMPLES = 10000
@@ -57,7 +60,17 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-    raise NotImplementedError
+    random_factor = (1 - DAMPING) / len(corpus)
+    results = {page : random_factor for page in corpus.keys()}
+
+    if len(corpus[page]) == 0:
+        return results
+
+    target_factor = DAMPING / len(corpus[page])
+    for link in corpus[page]:
+        results[link] += target_factor
+
+    return results
 
 
 def sample_pagerank(corpus, damping_factor, n):
@@ -69,8 +82,32 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    pages = [page for page in corpus.keys()]
+    start_page = choice(pages)
 
+
+    visited_pages = []
+    for i in range(n):
+
+        tramo = transition_model(corpus, start_page, damping_factor)
+
+        probabilities = tramo.values()
+        next_page = choices(pages, probabilities)
+
+        visited_pages.append(next_page)
+
+    df = pd.DataFrame(visited_pages).astype({0 : "category"})
+
+    uniques = df[0].unique()
+
+    variable = df[0].value_counts()
+
+    page_ranks = {uniques[i] : int(variable[i]) for i in range(len(df[0].unique()))}
+
+    for page in page_ranks:
+        page_ranks[page] = page_ranks[page] / n
+
+    return page_ranks
 
 def iterate_pagerank(corpus, damping_factor):
     """
@@ -81,7 +118,32 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    N = len(corpus)
+
+    page_ranks = {page : (1 / N) for page in corpus.keys()}
+
+
+    last_change = 1
+    while last_change > 0.0001:
+
+        for page in page_ranks.keys():
+
+            rank_over_link = []
+
+            for link in corpus:
+                match len(corpus[link]):
+                    case 0:
+                        rank_over_link.append(page_ranks[link] / N)
+                    case _:
+                        if page in corpus[link]:
+                            rank_over_link.append(page_ranks[link] / len(corpus[link]))
+
+
+            page_ranks[page] = ((1 - damping_factor) / N ) + damping_factor * sum(rank_over_link)
+
+        last_change = 1 - sum(page_ranks.values())
+
+    return page_ranks
 
 
 if __name__ == "__main__":
