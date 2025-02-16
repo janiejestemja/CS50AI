@@ -4,6 +4,9 @@ import sys
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 
+import numpy as np
+import pandas as pd
+
 TEST_SIZE = 0.4
 
 
@@ -59,7 +62,35 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
+    df = pd.read_csv("shopping.csv").astype( {
+        "Month" : "category",
+        "VisitorType" : "category",
+        "Weekend": "int",
+        "Revenue": "int"
+    } )
+
+    month_list = ["Jan", "Feb", "Mar", "Apr", "May", "June", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    month_map = {month: month_index for month_index, month in enumerate(month_list)}
+
+    visitor_map = {
+        "Returning_Visitor": 1,
+        "New_Visitor": 0,
+        "Other": 0
+    }
+
+    df["Month"] = df["Month"].map(month_map)
+    df["VisitorType"] = df["VisitorType"].map(visitor_map)
+
+    df["Month"] = df["Month"].astype(int)
+
+    labels = df["Revenue"].values.tolist()
+
+    evidence_df = df.drop(["Revenue"], axis=1)
+
+    list_of_lists = evidence_df.values.tolist()
+
+    return (list_of_lists, labels)
 
 
 def train_model(evidence, labels):
@@ -67,7 +98,9 @@ def train_model(evidence, labels):
     Given a list of evidence lists and a list of labels, return a
     fitted k-nearest neighbor model (k=1) trained on the data.
     """
-    raise NotImplementedError
+    model = KNeighborsClassifier(n_neighbors=1)
+    model.fit(evidence, labels)
+    return model
 
 
 def evaluate(labels, predictions):
@@ -85,7 +118,21 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+    actual = np.array(labels)
+    predicted = np.array(predictions)
+
+    true_positive = np.sum((actual == 1) & (predicted == 1))
+    false_negative = np.sum((actual == 1) & (predicted == 0))
+
+    true_negative = np.sum((actual == 0) & (predicted == 0))
+    false_positive = np.sum((actual == 0) & (predicted == 1))
+
+    # True positive rate
+    sensitivity = true_positive / (true_positive + false_negative)
+    # True negative rate
+    specificity = true_negative / (true_negative + false_positive)
+
+    return (sensitivity, specificity)
 
 
 if __name__ == "__main__":
