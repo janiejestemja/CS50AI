@@ -111,26 +111,18 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        revised = False
-        for domain, values in self.domains.items():
-            # print()
-            # print("Variable: ", domain)
-            intersections = [x for x in self.crossword.overlaps if x[0] == domain]
+        overlap = self.crossword.overlaps[(x, y)]
+        if overlap == None:
+            return False
 
-            for intersection in intersections:
-                if constraint:= self.crossword.overlaps[intersection]:
-                    # print("Constraint: ", constraint, " set by: ", intersection[1])
+        y_characters = {word[overlap[1]] for word in self.domains[y]}
 
-                    possible_characters = {word[constraint[1]] for word in self.domains[intersection[1]]}
-                    # print(possible_characters)
+        prior_length = len(self.domains[x])
+        self.domains[x] = {word for word in self.domains[x] if word[overlap[0]] in y_characters}
+        if len(self.domains[x]) != prior_length:
+            return True
 
-                    current_length = len(self.domains[intersection[0]])
-                    self.domains[intersection[0]] = {word for word in self.domains[intersection[0]] if word[constraint[0]] in possible_characters}
-                    # print(crossword.domains[intersection[0]])
-
-                    if len(self.domains[intersection[0]]) < current_length:
-                        revised = True
-        return revised
+        return False
 
     def ac3(self, arcs=None):
         """
@@ -164,12 +156,6 @@ class CrosswordCreator():
         if len(assignment) != len(self.crossword.variables):
             return False
 
-        for crossword_variable in self.crossword.variables:
-            if crossword_variable not in assignment:
-                return False
-            elif assignment[crossword_variable] == None:
-                return False
-
         return True
 
     def consistent(self, assignment):
@@ -177,17 +163,18 @@ class CrosswordCreator():
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
+        for val in assignment:
+            neighbors = self.crossword.neighbors(val)
 
-        for domain, value in assignment.items():
-            intersections = [x for x in self.crossword.overlaps if x[0] == domain]
+            for neighbor in neighbors:
+                if neighbor not in assignment:
+                    continue
+                overlap = self.crossword.overlaps[(val, neighbor)]
+                if overlap == None:
+                    continue
 
-            for intersection in intersections:
-                if constraint:= self.crossword.overlaps[intersection]:
-
-                    possible_characters = {word[constraint[1]] for word in self.domains[intersection[1]]}
-
-                    if value[constraint[0]] != assignment[domain]:
-                        return False
+                if assignment[val][overlap[0]] != assignment[neighbor][overlap[1]]:
+                    return False
         return True
 
     def order_domain_values(self, var, assignment):
@@ -219,6 +206,8 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
+        if self.consistent(assignment) == False:
+            return None
         if self.assignment_complete(assignment):
             return assignment
 
