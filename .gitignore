@@ -8,3 +8,4 @@
 *.zip
 *small/
 *large/
+*.ipynb_checkpoints/
