@@ -140,7 +140,7 @@ class NimAI():
             if item[0][0] == tuple(state):
                 rewards.append(item[1])
 
-        if len(rewards) == 0:
+        if len(rewards) == 0 or max(rewards) < 0:
             return 0
         return max(rewards)
 
