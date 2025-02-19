@@ -99,8 +99,8 @@ def shortest_path(source, target):
 
     while True:
         if frontier.empty():
-            raise ValueError("no solution") 
-        
+            return None
+
         node = frontier.remove()
         
         if node.state == target:
