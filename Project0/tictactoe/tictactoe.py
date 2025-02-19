@@ -50,6 +50,13 @@ def result(board, action):
     """
     Returns the board that results from making move (i, j) on the board.
     """
+    i, j = action
+
+    if i < 0 or 3 < i:
+        raise ValueError
+    if j < 0 or 3 < j:
+        raise ValueError
+
     result = []
     for i, row in enumerate(board):
         new_row = []
@@ -119,6 +126,9 @@ def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
+    if winner(board):
+        return None
+
     alpha = -math.inf
     betha = math.inf
 
