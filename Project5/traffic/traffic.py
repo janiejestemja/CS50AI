@@ -98,20 +98,54 @@ def get_model():
     """
     # Define the model
     model = Sequential([
+         # Convolutional Layer
+        Conv2D(filters=32, kernel_size=(3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+        BatchNormalization(),
+
+        # Convolutional Layer
+        Conv2D(filters=32, kernel_size=(3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+        BatchNormalization(),
+
+        # Convolutional Layer
+        Conv2D(filters=32, kernel_size=(3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+        BatchNormalization(),
+
+        # Convolutional Layer
+        Conv2D(filters=32, kernel_size=(3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+        BatchNormalization(),
+
+        # Convolutional Layer
+        Conv2D(filters=32, kernel_size=(3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+        BatchNormalization(),
+        
+        # Convolutional Layer
+        Conv2D(filters=32, kernel_size=(3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+        BatchNormalization(),
+
+        # Convolutional Layer
+        Conv2D(filters=32, kernel_size=(3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+        BatchNormalization(),
+
         # Convolutional Layer
         Conv2D(filters=32, kernel_size=(3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
         BatchNormalization(),
         
         # (Optional) Pooling Layer
         MaxPooling2D(pool_size=(3, 3)),
-        
+
         # Flatten the output
         Flatten(),
-        
+
+        # Fully connected hidden layer
+        Dense(256, activation="relu"),
+        tf.keras.layers.Dropout(0.03),
+        BatchNormalization(),
+
         # Fully connected hidden layer
         Dense(128, activation="relu"),
+        tf.keras.layers.Dropout(0.02),
         BatchNormalization(),
-        
+
         # Output layer for classification
         Dense(NUM_CATEGORIES, activation="softmax")
     ])
