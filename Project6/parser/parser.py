@@ -17,7 +17,7 @@ V -> "smiled" | "tell" | "were"
 NONTERMINALS = """
 S -> NP VP | S Conj S | S Conj VP
 
-NP -> N | Det NP | AP NP | N PP
+NP -> N | Det N | AP NP | Det AP NP | N PP
 
 VP -> V | V NP | V NP PP | V PP | Adv VP | VP Adv
 
@@ -83,7 +83,12 @@ def np_chunk(tree):
     noun phrases as subtrees.
     """
     np_subtrees = [tree for tree in tree.subtrees() if tree.label() == "NP"]
-    np_chunks = [tree for tree in np_subtrees if tree.height() <= 3]
+    np_chunks = []
+
+    for subtree in tree.subtrees(lambda t: t.label() == "NP"):
+        # Check if there is any NP within this NP
+        if not any(child.label() == "NP" for child in subtree.subtrees(lambda t: t != subtree)):
+            np_chunks.append(subtree)
     return np_chunks
 
 
