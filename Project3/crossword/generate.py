@@ -133,7 +133,12 @@ class CrosswordCreator():
         Return True if arc consistency is enforced and no domains are empty;
         return False if one or more domains end up empty.
         """
-        queue = arcs if arcs else [x for x in self.crossword.overlaps]
+        if arcs == None:
+            queue = [x for x in self.crossword.overlaps]
+        elif len(arcs) == 0:
+            return True
+        else:
+            queue = arcs
 
         while len(queue) > 0:
             x, y = queue.pop()
@@ -163,6 +168,10 @@ class CrosswordCreator():
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
+        for var, word in assignment.items():
+            if var.length != len(word):
+                return False
+
         for val in assignment:
             neighbors = self.crossword.neighbors(val)
 
