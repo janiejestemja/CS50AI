@@ -3,8 +3,6 @@ import random
 import re
 import sys
 from random import choice, choices
-import numpy as np
-import pandas as pd
 
 DAMPING = 0.85
 SAMPLES = 10000
@@ -60,15 +58,21 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-    random_factor = (1 - DAMPING) / len(corpus)
-    results = {page : random_factor for page in corpus.keys()}
+    results = {page : 0 for page in corpus.keys()}
 
+    # No link on page
     if len(corpus[page]) == 0:
+        for link in corpus.keys():
+            results[link] = results[link] + (1 / len(corpus))
         return results
-
-    target_factor = DAMPING / len(corpus[page])
+    
+    # Random link with probability of damping 
     for link in corpus[page]:
-        results[link] += target_factor
+        results[link] = results[link] + damping_factor * (1 / len(corpus[page]))
+
+    # Random link with probability of (1 - damping) 
+    for link in corpus.keys():
+        results[link] = results[link] + (1 - damping_factor) * (1 / len(corpus))
 
     return results
 
@@ -82,32 +86,28 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
+    ranking = {key: 0 for key in corpus.keys()}
     pages = [page for page in corpus.keys()]
-    start_page = choice(pages)
+    page = choice(pages)
+    ranking[page] = ranking[page] + 1
 
+    tramo = transition_model(corpus, page, damping_factor)
 
-    visited_pages = []
-    for i in range(n):
+    # Generating remaining samples
+    count = 2 
+    while count <= n:
+        population = [key for key in tramo.keys()]
+        weights = [value for value in tramo.values()]
+        page = choices(population, weights, k=1)[0]
+        ranking[page] = ranking[page] + 1
+        tramo = transition_model(corpus, page, damping_factor)
+        count += 1
 
-        tramo = transition_model(corpus, start_page, damping_factor)
+    # Normalization
+    for page in ranking.keys():
+        ranking[page] = ranking[page] / n
 
-        probabilities = tramo.values()
-        next_page = choices(pages, probabilities)
-
-        visited_pages.append(next_page)
-
-    df = pd.DataFrame(visited_pages).astype({0 : "category"})
-
-    uniques = df[0].unique()
-
-    variable = df[0].value_counts()
-
-    page_ranks = {uniques[i] : int(variable[i]) for i in range(df[0].nunique())}
-
-    for page in page_ranks:
-        page_ranks[page] = page_ranks[page] / n
-
-    return page_ranks
+    return ranking
 
 def iterate_pagerank(corpus, damping_factor):
     """
@@ -122,26 +122,28 @@ def iterate_pagerank(corpus, damping_factor):
 
     page_ranks = {page : (1 / N) for page in corpus.keys()}
 
+    # Placing links to every page on pages without any links
+    new_corpus = dict()
+    for key in corpus.keys():
+        val = corpus[key] if corpus[key] != set() else set(corpus.keys())
+        new_corpus[key] = val
 
-    last_change = 1
-    while last_change > 0.0001:
+    while True:
+        current_rank = page_ranks
+        new_ranking = {key: 0 for key in new_corpus.keys()}
 
-        for page in page_ranks.keys():
+        for page in corpus.keys():
+            choice_a = 1 / N
+            choice_b = sum([page_ranks[i] / len(corpus[i]) for i in corpus.keys() if page in corpus[i]])
 
-            rank_over_link = []
+            new_ranking[page] = (1 - damping_factor) * choice_a + damping_factor * choice_b
 
-            for link in corpus:
-                match len(corpus[link]):
-                    case 0:
-                        rank_over_link.append(page_ranks[link] / N)
-                    case _:
-                        if page in corpus[link]:
-                            rank_over_link.append(page_ranks[link] / len(corpus[link]))
+        page_ranks = new_ranking
 
+        differences = [i - j for i, j in zip(current_rank.values(), new_ranking.values())]
 
-            page_ranks[page] = ((1 - damping_factor) / N ) + damping_factor * sum(rank_over_link)
-
-        last_change = 1 - sum(page_ranks.values())
+        if all(difference <= 0.001 for difference in differences):
+            break
 
     return page_ranks
 
