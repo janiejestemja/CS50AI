@@ -128,19 +128,20 @@ def iterate_pagerank(corpus, damping_factor):
         val = corpus[key] if corpus[key] != set() else set(corpus.keys())
         new_corpus[key] = val
 
+
     while True:
-        current_rank = page_ranks
+        current_ranking = page_ranks
         new_ranking = {key: 0 for key in new_corpus.keys()}
 
         for page in corpus.keys():
             choice_a = 1 / N
-            choice_b = sum([page_ranks[i] / len(corpus[i]) for i in corpus.keys() if page in corpus[i]])
+            choice_b = sum([page_ranks[i] / len(new_corpus[i]) for i in corpus.keys() if page in new_corpus[i]])
 
             new_ranking[page] = (1 - damping_factor) * choice_a + damping_factor * choice_b
 
         page_ranks = new_ranking
 
-        differences = [i - j for i, j in zip(current_rank.values(), new_ranking.values())]
+        differences = [i - j for i, j in zip(current_ranking.values(), new_ranking.values())]
 
         if all(difference <= 0.001 for difference in differences):
             break
